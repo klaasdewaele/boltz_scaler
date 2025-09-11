@@ -1,0 +1,10 @@
+version: 1
+sequences:
+  - protein:
+      id: A
+      sequence: MTEQQWNFAGIEAAASAIQGNVTSIHSLLDEGKQSLTKLAAAWGGSGSEAYQGVQQKWDATATELNNALQNLARTISEAGQAMASTEGNVTGMFA
+      msa: /path/on/hpc/boltz_dimer_job/msas/Rv3875/boltz_results_Rv3875/boltz_results_Rv3875/msa/Rv3875_unpaired_tmp_env/bfd.mgnify30.metaeuk30.smag30.a3m
+  - protein:
+      id: B
+      sequence: MAEMKTDAATLAQEAGNFERISGDLKTQIDQVESTAGSLQGQWRGAAGTAAQAAVVRFQEAANKQKQELDEISTNIRQAGVQYSRADEEQQQALSSQMGF
+      msa: /path/on/hpc/boltz_dimer_job/msas/Rv3874/boltz_results_Rv3874/boltz_results_Rv3874/msa/Rv3874_unpaired_tmp_env/bfd.mgnify30.metaeuk30.smag30.a3m
