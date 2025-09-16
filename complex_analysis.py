@@ -24,6 +24,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 import logging
 from Bio import SeqIO
+from protein_parser import parse_protein_files
 import plotly.graph_objects as go
 import plotly.io as pio
 from plotly.offline import plot
@@ -87,25 +88,16 @@ class ComplexAnalyzer:
         return None
 
     def load_sequences_from_fasta(self):
-        """Load protein sequences from FASTA files and create a mapping from sequence to gene name."""
-        logging.info("Loading sequences from FASTA files...")
+        """Load protein sequences from FASTA files and create a mapping from sequence to gene name using shared parser."""
+        logging.info("Loading sequences from FASTA files using shared parser...")
         
-        for fasta_file in self.fasta_files:
-            logging.info(f"Processing FASTA file: {fasta_file}")
-            try:
-                for record in SeqIO.parse(fasta_file, "fasta"):
-                    gene_name = record.id
-                    sequence = str(record.seq)
-                    
-                    # Clean up gene name (remove any pipe-separated parts, etc.)
-                    if '|' in gene_name:
-                        gene_name = gene_name.split('|')[0]
-                    
-                    gene_name = gene_name.strip()
-                    self.sequence_to_gene[sequence] = gene_name
-                    logging.info(f"Added sequence for gene: {gene_name}, length: {len(sequence)}")
-            except Exception as e:
-                logging.error(f"Error processing FASTA file {fasta_file}: {e}")
+        # Use the shared parsing function
+        protein_records = parse_protein_files(self.fasta_files)
+        
+        # Create sequence to gene name mapping 
+        for protein_id, record in protein_records.items():
+            self.sequence_to_gene[record.sequence] = record.name
+            logging.info(f"Added sequence for gene: {record.name}, length: {len(record.sequence)}")
         
         logging.info(f"Total sequences loaded: {len(self.sequence_to_gene)}")
         return self.sequence_to_gene

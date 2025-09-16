@@ -42,8 +42,10 @@ from typing import Dict, List, Tuple, Set, Optional
 
 try:
     from Bio import SeqIO
+    from protein_parser import parse_protein_files
 except ImportError:
     print("Biopython is required. Please install it with: pip install biopython")
+    print("Also ensure protein_parser.py is in the same directory.")
     sys.exit(1)
 
 # Set up logging
@@ -106,8 +108,8 @@ class YAMLProteinPipeline:
         self.protein_info = {}
         
     def parse_fasta_files(self) -> dict:
-        """Parse all FASTA files and extract unique protein sequences, tagging as bait/candidate if specified."""
-        logging.info("Parsing FASTA files...")
+        """Parse all FASTA files and extract unique protein sequences using shared parser, tagging as bait/candidate if specified."""
+        logging.info("Parsing FASTA files using shared parser...")
         
         # Helper to tag group
         def get_group(fasta_file):
@@ -118,43 +120,19 @@ class YAMLProteinPipeline:
                     return "candidate"
             return None
         
-        for fasta_file in self.fasta_files:
-            if not os.path.exists(fasta_file):
-                logging.error(f"FASTA file not found: {fasta_file}")
-                continue
+        # Use the shared parsing function
+        protein_records = parse_protein_files(self.fasta_files)
+        
+        # Convert to the format expected by this class and add grouping
+        for protein_id, record in protein_records.items():
+            group = get_group(record.source_file)
             
-            group = get_group(fasta_file)
-            logging.info(f"Processing {fasta_file} (group: {group})")
-            
-            try:
-                for record in SeqIO.parse(fasta_file, "fasta"):
-                    protein_id = record.id
-                    sequence = str(record.seq)
-                    
-                    # If the ID contains a pipe character, use the part before it as the ID
-                    if '|' in protein_id:
-                        protein_id = protein_id.split('|')[0]
-                    
-                    # Ensure the ID is valid for file naming
-                    protein_id = re.sub(r'[^\w]', '_', protein_id)
-                    
-                    # If this ID already exists with a different sequence, append a unique number
-                    base_id = protein_id
-                    counter = 1
-                    while protein_id in self.protein_info and self.protein_info[protein_id]["sequence"] != sequence:
-                        protein_id = f"{base_id}_{counter}"
-                        counter += 1
-                    
-                    # Tag group if not already set
-                    entry = self.protein_info.get(protein_id, {})
-                    entry["sequence"] = sequence
-                    if "group" not in entry or entry["group"] is None:
-                        entry["group"] = group
-                    self.protein_info[protein_id] = entry
-                    logging.info(f"Added protein {protein_id} (group: {entry['group']}) with length {len(sequence)}")
-            
-            except Exception as e:
-                logging.error(f"Error parsing {fasta_file}: {e}")
+            entry = {
+                "sequence": record.sequence,
+                "group": group
+            }
+            self.protein_info[protein_id] = entry
+            logging.info(f"Added protein {protein_id} (group: {group}) with length {len(record.sequence)}")
         
         logging.info(f"Total unique proteins found: {len(self.protein_info)}")
         return self.protein_info
@@ -167,7 +145,8 @@ class YAMLProteinPipeline:
         
         logging.info("Generating MSAs for all proteins using YAML format...")
         
-        for protein_id, sequence in self.protein_info.items():
+        for protein_id, protein_data in self.protein_info.items():
+            sequence = protein_data["sequence"]
             protein_dir = self.msas_dir / protein_id
             protein_dir.mkdir(exist_ok=True)
             

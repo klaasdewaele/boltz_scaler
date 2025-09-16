@@ -1,0 +1,1 @@
+python protein_pipeline.py --fasta_files ./minimal_example/input/three_proteins.fasta --r 2 --out_dir ./minimal_example/output --gpu_count 1 --use_pbs ./minimal_example/input/example_pbs_template.sh --pbs_work_dir /path/on/hpc/boltz_dimer_job
